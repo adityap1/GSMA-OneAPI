@@ -17,6 +17,7 @@ produces:
 paths:
   /smsmessaging/outbound/{senderAddress}/requests:
     post:
+      operationId: sendMessage
       summary: Send message
       description: |
         To send an SMS message, provide the OneAPI-formatted URI of the addresses that must receive the message in the request body. 
@@ -66,6 +67,7 @@ paths:
   /smsmessaging/outbound/{senderAddress}/requests/{requestID}/deliveryInfos:
     post:
       summary: Query Delivery Status of SMS Message
+      operationId: queryDeliveryStatus
       description: |
         The Query Delivery Status operation retrieves the delivery status of a previously-sent message by using the system-generated requestID returned when the message was created.
       consumes:
@@ -95,6 +97,7 @@ paths:
   /smsmessaging/outbound/{senderAddress}/subscriptions:
     post:
       summary: Subscribe to SMS Delivery Notification
+      operationId: subscribeToDeliveryNotification
       description: |
         The Subscribe to SMS Delivery Notification operation creates a subscription to delivery notifications for an application. To set up an SMS notification, provide the criteria which will trigger notifications and a notifyURL for the delivery of the notifications. The criteria can be a string which, when matched, could be the notification of an SMS received or of a delivery receipt. The request body contains the correlator for the notification, the notifyURL to which the call direction notifications must be sent and, optionally, the callbackData (a string to identify the notification).
         
@@ -135,6 +138,7 @@ paths:
   /smsmessaging/outbound/subscriptions/{subscriptionID}:
     delete:
       summary: Stop Subscription to Delivery Notifications
+      operationId: stopSubscriptionToDeliveryNotifications
       description: The Stop Subscription to Delivery Notification operation terminates a previously set up SMS notification for the application. To stop a previously set up SMS notification, provide the correlator for the notification passed earlier in the Subscribe to SMS Delivery Notification request.
       parameters:
         - name: subscriptionID
@@ -152,6 +156,7 @@ paths:
   /smsmessaging/inbound/registrations/{registrationID}/messages:
     get:
       summary: Retrieve Messages Sent to Web Application
+      operationId: retrieveMessagesSentToApp
       description: The OneAPI Retrieve Messages Sent to Web Application operation polls Services Gatekeeper for the SMS messages that have been received from the network for an application.
       parameters:
         - name: registrationID
@@ -176,6 +181,7 @@ paths:
   /smsmessaging/inbound/subscriptions:
     post:
       summary: Subscribe to Notifications of Messages Sent to Application
+      operationId: subscribeSmsSentToApp
       description: |
         The Subscribe to Notifications Sent to Application operation creates a subscription to delivery notifications for when an application receives a message. To set up an application notification, provide the destinationAddress that will trigger notifications and a notifyURL for the delivery of the notifications. The destinationAddress is the MSISDN, or code during set up, to which subscribers may send an SMS to your application. For the Notification Data Object for Application Notification Message Sent to notifyURL, Please see 'inboundSMSMessageNotification' in models
       parameters:
@@ -220,6 +226,7 @@ paths:
   /smsmessaging/inbound/subscriptions/{subscriptionID}:
     delete:
       summary: Stop Subscription to Application Message Notifications
+      operationId: stopSubscriptionSentToApp
       description: The Stop Subscription to Application Message Notification operation terminates a previously set up application message notification subscription. To stop a previously set up subscription, provide the correlator for the notification passed earlier in the Subscribe to Notifications of Messages Sent to Application request.
       parameters:
         - name: subscriptionID
