@@ -1,0 +1,356 @@
+# this is an example of the ONEAPI
+swagger: '2.0'
+info:
+  title: ONEAPI
+  description: Access telecommunications services using the GSMA OneAPI
+  version: "X.X.X"
+# the domain of the service
+host: localhost
+# array of all schemes that your API supports
+schemes:
+  - http
+  - https
+# will be prefixed to all paths
+basePath: /1
+produces:
+  - application/json
+paths:
+  /smsmessaging/outbound/{senderAddress}/requests:
+    post:
+      summary: Send message
+      description: |
+        To send an SMS message, provide the OneAPI-formatted URI of the addresses that must receive the message in the request body. 
+      consumes:
+      - application/x-www-form-urlencoded
+      produces:
+      - application/json
+      parameters:
+      - name: address
+        in: formData
+        description: At least one address is the URL-escaped end user ID; in this case the MSISDN including the 'tel:' protocol identifier and the country code preceded by '+'
+        required: true
+        type: string
+      - name: message
+        in: formData
+        description: Must be URL-escaped as per RFC 1738. Messages over 160 characters may be sent as two or more messages by the operator.
+        required: true
+        type: string
+      - name: senderAddress
+        in: path
+        description: The address to whom a responding SMS may be sent.
+        required: true
+        type: string
+      - name: senderAddress
+        in: formData
+        description: The address to whom a responding SMS may be sent.
+        required: true
+        type: string
+      - name: senderName
+        in: formData
+        description: The URL-escaped name of the sender to appear on the terminal. This is the address to whom a responding SMS may be sent.
+        required: false
+        type: string
+      responses:
+        201:
+          description: The body of the response contains the request identifier as the string value for the resourceReference attribute. It is the request identifier returned in the Location header field of the response message and is also included in the resourceReference body. The application uses this request identifier to retrieve the delivery status for the sent message.
+          headers:
+            Location:
+              description: http://host:port/oneapi/1/smsmessaging/outbound/address/requests/requestID
+              type: string
+          schema:
+            $ref: '#/definitions/ResourceReference'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /smsmessaging/outbound/{senderAddress}/requests/{requestID}/deliveryInfos:
+    post:
+      summary: Query Delivery Status of SMS Message
+      description: |
+        The Query Delivery Status operation retrieves the delivery status of a previously-sent message by using the system-generated requestID returned when the message was created.
+      consumes:
+      - application/x-www-form-urlencoded
+      produces:
+      - application/json
+      parameters:
+      - name: senderAddress
+        in: path
+        description: The address to whom a responding SMS may be sent.
+        required: true
+        type: string
+      - name: requestID
+        in: path
+        description:  The identifier returned in the result object of the corresponding Send operation.
+        required: true
+        type: string
+      responses:
+        200:
+          description: The response body contains an array of structures as the value for deliveryInfo. Each element in the array contains values for the following parameters.
+          schema:
+            $ref: '#/definitions/DeliveryStatusResponse'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /smsmessaging/outbound/{senderAddress}/subscriptions:
+    post:
+      summary: Subscribe to SMS Delivery Notification
+      description: |
+        The Subscribe to SMS Delivery Notification operation creates a subscription to delivery notifications for an application. To set up an SMS notification, provide the criteria which will trigger notifications and a notifyURL for the delivery of the notifications. The criteria can be a string which, when matched, could be the notification of an SMS received or of a delivery receipt. The request body contains the correlator for the notification, the notifyURL to which the call direction notifications must be sent and, optionally, the callbackData (a string to identify the notification).
+        
+        For the Notification Data Object for SMS Delivery Receipt Sent to notifyURL
+        Please see 'deliveryInfoNotification' in models 
+        
+        
+      parameters:
+      - name: senderAddress
+        in: path
+        description: The address to whom a responding SMS may be sent.
+        required: true
+        type: string
+      - name: notifyURL
+        in: formData
+        description: This will be used by the server to POST the notifications to you, so include the URL of your own listener application.
+        required: true
+        type: string
+      - name: clientCorrelator
+        in: formData
+        description: Uniquely identifies this create subscription request. If there is a communication failure during the request, using the same client correlator when retrying the request allows the operator to avoid creating a duplicate subscription.
+        required: false
+        type: string
+      - name: callbackData
+        in: formData
+        description: A function name or other data that you would like included when the POST is received.
+        required: false
+        type: string
+      responses:
+        201:
+          description: The response body contains a confirmation deliveryReceiptSubscription JSON data structure consisting of the parameters supplied in the subscription request. A resourceURL is included as a reference to the response.
+          schema:
+            $ref: '#/definitions/DeliveryReceiptSubscription'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /smsmessaging/outbound/subscriptions/{subscriptionID}:
+    delete:
+      summary: Stop Subscription to Delivery Notifications
+      description: The Stop Subscription to Delivery Notification operation terminates a previously set up SMS notification for the application. To stop a previously set up SMS notification, provide the correlator for the notification passed earlier in the Subscribe to SMS Delivery Notification request.
+      parameters:
+        - name: subscriptionID
+          in: path
+          description: The reference to the created subscription.
+          required: true
+          type: string
+      responses:
+        204:
+          description: No content
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /smsmessaging/inbound/registrations/{registrationID}/messages:
+    get:
+      summary: Retrieve Messages Sent to Web Application
+      description: The OneAPI Retrieve Messages Sent to Web Application operation polls Services Gatekeeper for the SMS messages that have been received from the network for an application.
+      parameters:
+        - name: registrationID
+          in: path
+          description: The value previously set up to enable the application to receive notification that SMS messages have been received according to specified criteria.
+          required: true
+          type: string
+        - name: maxBatchSize
+          in: query
+          description: The maximum number of message to return.
+          required: true
+          type: string
+      responses:
+        200:
+          description: Profile information for a user
+          schema:
+            $ref: '#/definitions/InboundSMSMessage'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /smsmessaging/inbound/subscriptions:
+    post:
+      summary: Subscribe to Notifications of Messages Sent to Application
+      description: |
+        The Subscribe to Notifications Sent to Application operation creates a subscription to delivery notifications for when an application receives a message. To set up an application notification, provide the destinationAddress that will trigger notifications and a notifyURL for the delivery of the notifications. The destinationAddress is the MSISDN, or code during set up, to which subscribers may send an SMS to your application. For the Notification Data Object for Application Notification Message Sent to notifyURL, Please see 'inboundSMSMessageNotification' in models
+      parameters:
+        - name: destinationAddress
+          in: formData
+          description: The MSISDN, or code agreed upon by the operator, to which subscribers may send an SMS to your application.
+          required: true
+          type: string
+        - name: notifyURL
+          in: formData
+          description: Used by the server to POST the notifications to you, so include the URL of your own listener application.
+          required: true
+          type: string
+        - name: criteria
+          in: formData
+          description: Case-insensitive text to match against the first word of the message, ignoring any leading whitespace. This allows you to reuse a short code among various applications, each of which can register its own subscription with different criteria.
+          required: false
+          type: string
+        - name: clientCorrelator
+          in: formData
+          description: Uniquely identifies this create subscription request. If there is a communication failure during the request, using the same client correlator when retrying the request allows the operator to avoid creating a duplicate subscription.
+          required: false
+          type: string
+        - name: callbackData
+          in: formData
+          description: A function name or other data that you would like included when the POST is received.
+          required: false
+          type: string
+      responses:
+        201:
+          description: The response body contains a confirmation resourceReference JSON data structure consisting of the parameters supplied in the subscription request.
+          headers:
+            Location:
+              description: The Location header field contains the URI of the publish/subscribe server where subscriptionID is the reference to the created subscription. sample http://host:port/oneapi/1/smsmessaging/inbound/subscriptions/subscriptionID
+              type: string
+          schema:
+            $ref: '#/definitions/ResourceReference'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /smsmessaging/inbound/subscriptions/{subscriptionID}:
+    delete:
+      summary: Stop Subscription to Application Message Notifications
+      description: The Stop Subscription to Application Message Notification operation terminates a previously set up application message notification subscription. To stop a previously set up subscription, provide the correlator for the notification passed earlier in the Subscribe to Notifications of Messages Sent to Application request.
+      parameters:
+        - name: subscriptionID
+          in: path
+          description: The reference to the created subscription. 
+          required: true
+          type: string
+      responses:
+        204:
+          description: The response body contains a confirmation resourceReference JSON data structure consisting of the parameters supplied in the subscription request.
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  resource:
+    type: object
+    properties:
+      resourceURL:
+        type: string
+  ResourceReference:
+    description: The application uses this request identifier to retrieve the delivery status for the sent message.
+    type: object
+    properties:
+      resourceReference:
+        $ref: '#/definitions/resource'
+  
+  DeliveryInfo:
+    type: object
+    properties:
+      address:
+        description: The telephone number to which the initial message was sent.
+        type: string
+      deliveryStatus:
+        description: Enumeration value ( DeliveredToNetwork, DeliveryUncertain, DeliveryImpossible, DeliveredToTerminal, MessageWaiting)
+        type: string
+  DeliveryStatusResponse:
+    description: The application uses this request identifier to retrieve the delivery status for the sent message.
+    type: object
+    properties:
+      deliveryInfoList:
+        type: object
+        properties:
+          deliveryInfo:
+            type: array
+            items:
+                $ref: '#/definitions/DeliveryInfo'
+          resourceURL:
+            type: string
+  callbackReference:
+    type: object
+    properties:
+      callbackData:
+        type: string
+      notifyURL:
+        type: string
+      criteria:
+        type: string
+  DeliveryReceiptSubscription:
+    type: object
+    properties:
+      callbackReference:
+        $ref: '#/definitions/callbackReference'
+      resourceURL:
+        type: string
+  SMSMessage:
+    type: object
+    properties:
+      dateTime:
+        description: The date and time when the message was received
+        type: string
+      destinationAddress:
+        description: The number or shortcode for the application
+        type: string
+      messageId:
+        description: A server generated message identifier
+        type: string
+      message:
+        description: The SMS message
+        type: string
+      resourceURL:
+        description: Link to the message
+        type: string
+      senderAddress:
+        description: he MSISDN of the sender
+        type: string
+  InboundSMSMessage:
+    type: object
+    properties:
+      inboundSMSMessage:
+        $ref: '#/definitions/SMSMessage'
+  deliveryInfoNotification:
+    type: object
+    properties:
+      callbackData: 
+        type: string
+      deliveryInfo:
+        $ref: '#/definitions/DeliveryInfo'
+  Message:
+    type: object
+    properties:
+      dateTime:
+        description: The date and time when the message was received
+        type: string
+      destinationAddress:
+        description: The number or shortcode for the application
+        type: string
+      messageId:
+        description: A server generated message identifier
+        type: string
+      message:
+        description: The SMS message
+        type: string
+      senderAddress:
+        description: he MSISDN of the sender
+        type: string
+  inboundSMSMessageNotification:
+    type: object
+    properties:
+      callbackData:
+        type: string
+      inboundSMSMessage:
+        $ref: '#/definitions/Message'
+          
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
