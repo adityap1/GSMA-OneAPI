@@ -37,12 +37,12 @@ paths:
         required: true
         type: string
       - name: senderAddress
-        in: path
+        in: formData
         description: The address to whom a responding SMS may be sent.
         required: true
         type: string
       - name: senderAddress
-        in: formData
+        in: path
         description: The address to whom a responding SMS may be sent.
         required: true
         type: string
@@ -173,7 +173,7 @@ paths:
         200:
           description: Profile information for a user
           schema:
-            $ref: '#/definitions/InboundSMSMessage'
+            $ref: '#/definitions/InboundSMSMessageList'
         default:
           description: Unexpected error
           schema:
@@ -317,7 +317,15 @@ definitions:
     type: object
     properties:
       inboundSMSMessage:
-        $ref: '#/definitions/SMSMessage'
+        type: array
+        items: {
+          $ref: '#/definitions/SMSMessage'
+        }
+  InboundSMSMessageList:
+    type: object
+    properties:
+      inboundSMSMessageList:
+        $ref: '#/definitions/InboundSMSMessage'
   deliveryInfoNotification:
     type: object
     properties:
